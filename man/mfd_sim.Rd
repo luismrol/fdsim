@@ -2,7 +2,7 @@
 % Please edit documentation in R/mfd_sim.R
 \name{mfd_sim}
 \alias{mfd_sim}
-\title{Simulation algorithm for multivariate functional data}
+\title{Simulation algorithm for multivariate functional data from Ieva and Paganoni (2017)}
 \usage{
 mfd_sim(N, mu, covar = NULL, rho = 0, method = c("svd", "chol", "eigen"))
 }
@@ -22,5 +22,6 @@ A list of simulated functional data
 }
 \description{
 This function simulates multivariate functional data using Eigen, Cholesky and Singular
-Value Decomposition.
+Value Decomposition, based on the method proposed by Ieva and Paganoni (2017) and implemented
+In the library 'roahd
 }
