@@ -40,7 +40,7 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
   if (is.null(covar)) {
     covar <- list()
     for (i in 1:L){
-      covar[[i]]<-NULL
+      covar[i]<-list(NULL)
     }
   }
 
