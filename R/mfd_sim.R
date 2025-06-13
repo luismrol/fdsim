@@ -27,13 +27,19 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
   if (!is.numeric(N)){
     stop(paste("Sample size must be a positive integer. Class", class(N)[1], "is not valid"))
   }
-  if (is.null(covar)) covar <- list()
   # Columns for each dimension
   P <- ncol(mu)
   N <- floor(N)
   # Number of dimensions
   L <- nrow(mu)
   method <- match.arg(method, c("svd", "chol", "eigen"))
+
+  if (is.null(covar)) {
+    covar <- list()
+    for (i in 1:L){
+      covar[[i]]<-NA
+    }
+  }
 
   # Generate the correlation matrix between dimensions
   m_rho <- matrix(1, ncol <- L, nrow <- L)
@@ -68,7 +74,7 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
 
     for (i in 1:L){
       if(is.null(covar[[i]])){
-        covar[[i]] <- diag(1,P,P)
+        covar[[i]] <- diag(,P,P)
         message(paste("Running with Identity matrix of dimension", P, "as covariance for component", (i)))
       }
       svd <- svd(covar[[i]])
