@@ -34,6 +34,9 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
   L <- nrow(mu)
   method <- match.arg(method, c("svd", "chol", "eigen"))
 
+  # Create empty list to store each of the dimensions
+  l_rand <- list()
+
   if (is.null(covar)) {
     covar <- list()
     for (i in 1:L){
@@ -46,8 +49,7 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
   m_rho[upper.tri(m_rho)] <- rho
   m_rho[lower.tri(m_rho)] <- rho
 
-  # Create empty list to store each of the dimensions
-  l_rand <- list()
+
 
   # Generate random uncorrelated normal values as a base
   rand <- matrix(rnorm(N*P*L), N*P, L)
