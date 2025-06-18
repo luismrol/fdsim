@@ -30,14 +30,12 @@ mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
     }
   }
   delta<-delta
-  P <- ncol(mu)
   N <- floor(N)
   # Number of dimensions
-  L <- nrow(mu)
   Kxx <- kernel(grid2, grid2, delta)
   Ktx <- kernel(grid1, grid2, delta)
   Ktt <- kernel(grid1, grid1, delta)
-  D <- diag(pmin(((mean(grid1)) - x)^2, 1))
+  D <- diag(pmin(((mean(grid2)) - x)^2, 1))
   K_m <- Ktx %*% solve(Kxx + D)
   mu_x <- as.matrix(runif(1, -2, 2)) %*% t(sin(x)) + as.matrix(runif(1, -1, 1)) %*% t(cos(x))
   mu_t <- as.vector(K_m %*% t(mu_x))
@@ -50,7 +48,7 @@ mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
     for (i in 2:ncol(Y[[1]])){
       dY[,i-1]<-(Y[[1]][,i]-Y[[1]][,(i-1)])/den
     }
-    Y[[2]]<- dY
+    Y[[2]]<- as.matrix(dY)
     }
   return(Y)
 }
