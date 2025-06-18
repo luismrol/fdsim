@@ -5,7 +5,7 @@
 #' covariance specification, or a heteroskedastic function from a mean and random noise
 #'
 #' @param N       Number of functional observations
-#' @param grid,grid2    Grids of discrete points in which the function is mapped (1) and the heteroskedasticity component (2)
+#' @param grid,grid2    Numeric (Seq) grids of discrete points in which the function is mapped (1) and the heteroskedasticity component (2)
 #' @param der     Boolean indicating if numerical derivatives should be calculating
 #' @param covar   Covariance method. Could be absolute exponential decay ("abs") or cuadratic exponential decay ("sq")
 #' @param delta   Delta parameter of the covariance kernel
@@ -43,10 +43,11 @@ mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
   Sigma <- K_tt - K_tx %*% solve(K_xx + D) %*% t(K_tx)
   Y <- list()
   Y[[1]] <- as.matrix(exp(mvtnorm::rmvnorm(n = N, mean = mu_t, sigma = Sigma, method = method)))
+  den<-as.numeric(grid1[2]-grid1[1])
   if (der == TRUE){
     dY<-matrix(NA, ncol= ncol(Y[[1]])-1, nrow = nrow(Y[[1]]))
     for (i in 2:ncol(Y[[1]])){
-      dY[,i-1]<-(Y[[1]][,i]-Y[[1]][,(i-1)])/0.06346652
+      dY[,i-1]<-(Y[[1]][,i]-Y[[1]][,(i-1)])/den
     }
     Y[[2]]<- dY
     }
