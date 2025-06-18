@@ -37,7 +37,7 @@ mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
   Ktt <- kernel(grid1, grid1, delta)
   D <- diag(pmin(((pi) - grid2)^2, 1))
   K_m <- Ktx %*% solve(Kxx + D)
-  mu_x <- as.matrix(runif(1, -2, 2)) %*% t(sin(x)) + as.matrix(runif(1, -1, 1)) %*% t(cos(x))
+  mu_x <- as.matrix(runif(1, -2, 2)) %*% t(sin(grid2)) + as.matrix(runif(1, -1, 1)) %*% t(cos(grid2))
   mu_t <- as.vector(K_m %*% t(mu_x))
   Sigma <- Ktt - Ktx %*% solve(Kxx + D) %*% t(Ktx)
   Y <- list()
