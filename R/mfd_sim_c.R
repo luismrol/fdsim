@@ -21,12 +21,12 @@ mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
   # Columns for each dimension
   if (covar == "sq"){
     kernel <- function(a, b, delta) {
-      outer(a, b, function(i, j) exp(-((i - j)^2) / ((2 * delta)^2)))
+      as.matrix(outer(a, b, function(i, j) exp(-((i - j)^2) / ((2 * delta)^2))))
     }
   }
   else if (covar == "abs"){
     kernel <- function(a, b, delta) {
-      outer(a, b, function(i, j) exp(-(abs(i - j)) / ((2 * delta)^2)))
+      as.matrix(outer(a, b, function(i, j) exp(-(abs(i - j)) / ((2 * delta)^2))))
     }
   }
   delta<-delta
