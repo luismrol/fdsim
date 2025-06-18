@@ -41,7 +41,7 @@ mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
   K_m <- Ktx %*% solve(Kxx + D)
   mu_x <- as.matrix(runif(1, -2, 2)) %*% t(sin(x)) + as.matrix(runif(1, -1, 1)) %*% t(cos(x))
   mu_t <- as.vector(K_m %*% t(mu_x))
-  Sigma <- K_tt - K_tx %*% solve(K_xx + D) %*% t(K_tx)
+  Sigma <- Ktt - Ktx %*% solve(Kxx + D) %*% t(Ktx)
   Y <- list()
   Y[[1]] <- as.matrix(exp(mvtnorm::rmvnorm(n = N, mean = mu_t, sigma = Sigma, method = method)))
   den<-as.numeric(grid1[2]-grid1[1])
