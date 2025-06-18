@@ -18,6 +18,7 @@
 
 mfd_sim <- function(N, mu, covar = NULL, rho = 0,
                     method = c("svd", "chol", "eigen")){
+  #browser()
   if (!is.matrix(mu)){
     stop(paste("Mu should be a LxP matrix. An object of class", class(mu), "is not valid"))
   }
@@ -66,7 +67,7 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
         message(paste("Running with Identity matrix of dimension", P, "as covariance for component", (i)))
       }
       cv <- chol(covar[[i]])
-      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu) +(matrix(m_rand[,i], N, P) %*% cv)
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) +(matrix(m_rand[,i], N, P) %*% cv)
     }
   }
   if (method == "svd"){
@@ -81,7 +82,7 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
       }
       svd <- svd(covar[[i]])
       cv <- t(svd$v %*% (t(svd$u) * sqrt(pmax(svd$d, 0))))
-      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu)+ (matrix(m_rand[,i], N, P) %*% cv)
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,])+ (matrix(m_rand[,i], N, P) %*% cv)
     }
   }
   if (method == "eigen"){
@@ -94,7 +95,7 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
       }
       ed <- eigen(covar[[i]], symmetric <- TRUE)
       cv <- (ed$vectors %*% diag(sqrt(pmax (ed$values, 0))) %*% t(ed$vectors))
-      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu) + (matrix(m_rand[,i], N, P) %*% cv)
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) + (matrix(m_rand[,i], N, P) %*% cv)
     }
   }
   return(l_rand)
