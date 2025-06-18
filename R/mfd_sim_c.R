@@ -17,7 +17,7 @@
 # This generates the man/*.Rd help files and updates NAMESPACE
 
 mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
-                    method = c("svd", "chol", "eigen")){
+                    method = c("svd", "chol", "eigen"), delta = 0.25){
   # Columns for each dimension
   if (covar == "sq"){
     kernel <- function(a, b, delta) {
