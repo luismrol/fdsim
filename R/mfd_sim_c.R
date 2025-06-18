@@ -29,6 +29,7 @@ mfd_sim_c <- function(N, grid1, grid2, der = FALSE, covar = "sq",
       as.matrix(outer(a, b, function(i, j) exp(-(abs(i - j)) / ((2 * delta)^2))))
     }
   }
+  x<-grid2
   delta<-delta
   N <- floor(N)
   # Number of dimensions
