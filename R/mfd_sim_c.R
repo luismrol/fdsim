@@ -5,7 +5,7 @@
 #' covariance specification, or a heteroskedastic function from a mean and random noise
 #'
 #' @param N       Number of functional observations
-#' @param grid,grid2    Numeric (Seq) grids of discrete points in which the function is mapped (1) and the heteroskedasticity component (2)
+#' @param grid1,grid2    Numeric (Seq) grids of discrete points in which the function is mapped (1) and the heteroskedasticity component (2)
 #' @param der     Boolean indicating if numerical derivatives should be calculating
 #' @param covar   Covariance method. Could be absolute exponential decay ("abs") or cuadratic exponential decay ("sq")
 #' @param delta   Delta parameter of the covariance kernel
