@@ -1,4 +1,4 @@
-#' Simulation algorithm for multivariate functional data from Ieva and Paganoni (2017)
+#' Simulation algorithm for multivariate functional data based on Ieva and Paganoni (2017)
 #'
 #' @description
 #' This function simulates multivariate functional data using Eigen, Cholesky and Singular
