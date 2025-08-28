@@ -2,9 +2,17 @@
 % Please edit documentation in R/mfd_sim.R
 \name{mfd_sim}
 \alias{mfd_sim}
-\title{Simulation algorithm for multivariate functional data from Ieva and Paganoni (2017)}
+\title{Simulation algorithm for multivariate functional data based on Ieva and Paganoni (2017)}
 \usage{
-mfd_sim(N, mu, covar = NULL, rho = 0, method = c("svd", "chol", "eigen"))
+mfd_sim(
+  N,
+  mu,
+  grid = FALSE,
+  covar = "sq",
+  rho = 0,
+  method = c("svd", "chol", "eigen"),
+  delta = 0.5
+)
 }
 \arguments{
 \item{N}{Number of functional observations}

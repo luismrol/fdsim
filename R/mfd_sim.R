@@ -17,7 +17,7 @@
  # This generates the man/*.Rd help files and updates NAMESPACE
 
 mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
-                    method = c("svd", "chol", "eigen"), delta = 0.25){
+                    method = c("svd", "chol", "eigen"), delta = 0.5){
   #browser()
   if (!is.matrix(mu)){
     stop(paste("Mu should be a LxP matrix. An object of class", class(mu), "is not valid"))
@@ -43,19 +43,19 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
   for (i in 1:L){
   if (covar1[i] == "sq"){
     kernel <- function(a, b, delta) {
-      as.matrix(outer(a, b, function(i, j) exp(-((i - j)^2) / ((2 * delta)^2))))
+      as.matrix(outer(a, b, function(i, j) exp(-((i - j)^2) / ((delta)^2))))
     }
   }
   else if (covar1[i] == "abs"){
     kernel <- function(a, b, delta) {
-      as.matrix(outer(a, b, function(i, j) exp(-(abs(i - j)) / ((2 * delta)^2))))
+      as.matrix(outer(a, b, function(i, j) exp(-(abs(i - j)) / ((delta)))))
     }
   }
     covar[[i]] = kernel(grid, grid, delta)
   }
 
   # Generate the correlation matrix between dimensions
-  m_rho <- matrix(1, ncol <- L, nrow <- L)
+  m_rho <- matrix(1, ncol = L, nrow = L)
 
   # Careful: The upper triangle vector should be inputed column-wise.
 
