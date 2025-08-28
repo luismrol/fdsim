@@ -16,43 +16,53 @@
 
  # This generates the man/*.Rd help files and updates NAMESPACE
 
-mfd_sim <- function(N, mu, covar = NULL, rho = 0,
-                    method = c("svd", "chol", "eigen")){
+mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
+                    method = c("svd", "chol", "eigen"), delta = 0.25){
   #browser()
   if (!is.matrix(mu)){
     stop(paste("Mu should be a LxP matrix. An object of class", class(mu), "is not valid"))
-  }
-  if (!is.null(covar) && !is.list(covar)){
-    stop(paste("If provided, Covariance matrix must be a list of symmetric, positive definite matrices. Class", class(covar)[1], "is not valid"))
   }
   if (!is.numeric(N)){
     stop(paste("Sample size must be a positive integer. Class", class(N)[1], "is not valid"))
   }
   # Columns for each dimension
   P <- ncol(mu)
-  N <- floor(N)
   # Number of dimensions
   L <- nrow(mu)
-  method <- match.arg(method, c("svd", "chol", "eigen"))
-
+  method <- method
+  if (length(covar)==1){
+    covar = rep_len(covar, L)
+  }
   # Create empty list to store each of the dimensions
   l_rand <- list()
-
-  if (is.null(covar)) {
-    covar <- list()
-    for (i in 1:L){
-      covar[i]<-list(NULL)
+  if (isFALSE(grid)){
+    grid = seq(0,1, by = 1/(P-1))
+  }
+  covar1<-covar
+  covar = list()
+  for (i in 1:L){
+  if (covar1[i] == "sq"){
+    kernel <- function(a, b, delta) {
+      as.matrix(outer(a, b, function(i, j) exp(-((i - j)^2) / ((2 * delta)^2))))
     }
+  }
+  else if (covar1[i] == "abs"){
+    kernel <- function(a, b, delta) {
+      as.matrix(outer(a, b, function(i, j) exp(-(abs(i - j)) / ((2 * delta)^2))))
+    }
+  }
+    covar[[i]] = kernel(grid, grid, delta)
   }
 
   # Generate the correlation matrix between dimensions
   m_rho <- matrix(1, ncol <- L, nrow <- L)
+
+  # Careful: The upper triangle vector should be inputed column-wise.
+
   m_rho[upper.tri(m_rho)] <- rho
   m_rho[lower.tri(m_rho)] <- rho
 
-
-
-  # Generate random uncorrelated normal values as a base
+  # Generate random normal uncorrelated normal values as a base
   rand <- matrix(rnorm(N*P*L), N*P, L)
 
   if (method == "chol"){
@@ -66,7 +76,8 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
         covar[[i]] <- diag(,P,P)
         message(paste("Running with Identity matrix of dimension", P, "as covariance for component", (i)))
       }
-      cv <- chol(covar[[i]])
+      # I used nearPD to force the positive-definiteness of the covariance function
+      cv <- chol(as.matrix(Matrix::nearPD(covar[[i]], keepDiag = TRUE)$mat))
       l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) +(matrix(m_rand[,i], N, P) %*% cv)
     }
   }
@@ -74,7 +85,7 @@ mfd_sim <- function(N, mu, covar = NULL, rho = 0,
 
     # Apply correlation to the random values
     m_rand <- rand %*% t(svd(m_rho)$v %*% (t(svd(m_rho)$u) * sqrt(pmax(svd(m_rho)$d, 0))))
-
+    #print(str(m_rand))
     for (i in 1:L){
       if(is.null(covar[[i]])){
         covar[[i]] <- diag(,P,P)

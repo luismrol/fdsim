@@ -60,7 +60,7 @@ mfd_sim_h <- function(N, P, grid, mu, der = FALSE, covar = "sq",
     D <- diag(pmin(((0.5*median(grid1)) - grid2)^2, 1))
   }
   else {
-    D <- diag(1, nrow = length(grid2))
+    D <- diag(1, nrow = length(grid))
   }
 
   K_m <- Ktx %*% solve(Kxx + D)
