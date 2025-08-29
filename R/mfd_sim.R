@@ -3,10 +3,14 @@
 #' @description
 #' This function simulates multivariate functional data using Eigen, Cholesky and Singular
 #' Value Decomposition, based on the method proposed by Ieva and Paganoni (2017) and implemented
-#' In the library 'roahd
+#' initially in the library 'roahd', but with some changes enabling data exploration.
 #'
 #' @param N       Number of functional observations
 #' @param mu      Matrix with L rows and P columns containing the mean curves for the L components at discrete grid points
+#' @param grid    If you want to specify your own grid, the vector of the grid. Length must coincide with the number of columns in mu. Default is FALSE, in which case a [0,1] grid with even spacing
+#'                over P points is implemented.
+#' @param het     Logical, if a heteroskedasticity element should be taken into account. If TRUE, the main diagonal of the covariance
+#'                matrix will minimize at
 #' @param covar   List of L covariance matrices, one for each variable, each with P x P dimensions
 #' @param rho     Vector of cross correlations among L components
 #' @param method  Simulation method
@@ -17,8 +21,7 @@
  # This generates the man/*.Rd help files and updates NAMESPACE
 
 mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
-                    method = c("svd", "chol", "eigen"), delta = 0.5){
-  #browser()
+                    method = c("svd", "chol", "eigen"), delta = 0.5, het = TRUE){
   if (!is.matrix(mu)){
     stop(paste("Mu should be a LxP matrix. An object of class", class(mu), "is not valid"))
   }
@@ -38,22 +41,28 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
   if (isFALSE(grid)){
     grid = seq(0,1, by = 1/(P-1))
   }
-  covar1<-covar
-  covar = list()
-  for (i in 1:L){
-  if (covar1[i] == "sq"){
-    kernel <- function(a, b, delta) {
-      as.matrix(outer(a, b, function(i, j) exp(-((i - j)^2) / ((delta)^2))))
+  if(!is.list(covar)){
+    covar1<-covar
+    covar = list()
+    for (i in 1:L){
+      if (covar1[i] == "sq"){
+        kernel <- function(a, b, delta) {
+          as.matrix(outer(a, b, function(i, j) 2*exp(-((i - j)^2) / ((delta)^2))))
+        }
+      }
+      else if (covar1[i] == "abs"){
+        kernel <- function(a, b, delta) {
+          as.matrix(outer(a, b, function(i, j) 2*exp(-(abs(i - j)) / ((delta)))))
+        }
+      }
+      if (isTRUE(het)){
+       covar[[i]] = kernel(grid, grid, delta) - diag(abs((grid)-0.5))
+      }
+      else{
+        covar[[i]] = kernel(grid, grid, delta)
+      }
     }
   }
-  else if (covar1[i] == "abs"){
-    kernel <- function(a, b, delta) {
-      as.matrix(outer(a, b, function(i, j) exp(-(abs(i - j)) / ((delta)))))
-    }
-  }
-    covar[[i]] = kernel(grid, grid, delta)
-  }
-
   # Generate the correlation matrix between dimensions
   m_rho <- matrix(1, ncol = L, nrow = L)
 
