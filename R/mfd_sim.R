@@ -33,7 +33,7 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
   # Number of dimensions
   L <- nrow(mu)
   method <- method
-  if (length(covar)==1){
+  if (length(covar)==1 && is.matrix(covar)){
     covar = rep_len(covar, L)
   }
   # Create empty list to store each of the dimensions
