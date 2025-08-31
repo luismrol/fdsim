@@ -11,7 +11,8 @@ mfd_sim(
   covar = "sq",
   rho = 0,
   method = c("svd", "chol", "eigen"),
-  delta = 0.5
+  delta = 0.5,
+  het = TRUE
 )
 }
 \arguments{
@@ -19,11 +20,17 @@ mfd_sim(
 
 \item{mu}{Matrix with L rows and P columns containing the mean curves for the L components at discrete grid points}
 
+\item{grid}{If you want to specify your own grid, the vector of the grid. Length must coincide with the number of columns in mu. Default is FALSE, in which case a \link{0,1} grid with even spacing
+over P points is implemented.}
+
 \item{covar}{List of L covariance matrices, one for each variable, each with P x P dimensions}
 
 \item{rho}{Vector of cross correlations among L components}
 
 \item{method}{Simulation method}
+
+\item{het}{Logical, if a heteroskedasticity element should be taken into account. If TRUE, the main diagonal of the covariance
+matrix will minimize at}
 }
 \value{
 A list of simulated functional data
@@ -31,5 +38,5 @@ A list of simulated functional data
 \description{
 This function simulates multivariate functional data using Eigen, Cholesky and Singular
 Value Decomposition, based on the method proposed by Ieva and Paganoni (2017) and implemented
-In the library 'roahd
+initially in the library 'roahd', but with some changes enabling data exploration.
 }
