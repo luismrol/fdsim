@@ -73,5 +73,5 @@ uni_depth <- function(data, depth = "maha"){
     d = apply(data, 2, udepth)
   }
   out = ((d + (10^-10))^-1)-1
-  return(list("depth" = d, "outlyingness" = out, "mean depth" = rowMeans(d), "mean outlyingness" = rowMeans(out)))
+  return(list("depth" = d, "outlyingness" = out, "mean_depth" = rowMeans(d), "mean_out" = rowMeans(out), "mindepth" = apply(d, 1, min)))
 }
