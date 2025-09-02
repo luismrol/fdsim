@@ -6,7 +6,6 @@
 #'
 #' @param data    An NxP Matrix, from which a column-wise depth is calculated
 #' @param depth   What depth is going to be used. Supported are Mahalanobis, Projection, Univariate Tukey and Simplicial
-#' @param out     Should the associated outlyingness be also included in the result?
 #' @export
 
 
@@ -73,5 +72,6 @@ uni_depth <- function(data, depth = "maha"){
     d = apply(data, 2, udepth)
   }
   out = ((d + (10^-10))^-1)-1
-  return(list("depth" = d, "outlyingness" = out, "mean_depth" = rowMeans(d), "mean_out" = rowMeans(out), "mindepth" = apply(d, 1, min)))
+
+  return(list("depth" = d, "outlyingness" = out, "mean_depth" = rowMeans(d), "mean_out" = rowMeans(out), "mindepth" = apply(d, 1, min), "sd_depth"  = apply(d,1, sd)))
 }
