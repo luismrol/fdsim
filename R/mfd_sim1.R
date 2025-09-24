@@ -9,6 +9,8 @@
 #' @param mu      Matrix with L rows and P columns containing the mean curves for the L components at discrete grid points
 #' @param grid    If you want to specify your own grid, the vector of the grid. Length must coincide with the number of columns in mu. Default is FALSE, in which case a [0,1] grid with even spacing
 #'                over P points is implemented.
+#' @param het     Logical, if a heteroskedasticity element should be taken into account. If TRUE, the main diagonal of the covariance
+#'                matrix will minimize at
 #' @param covar   List of L covariance matrices, one for each variable, each with P x P dimensions
 #' @param rho     Vector of cross correlations among L components
 #' @param method  Simulation method
@@ -16,10 +18,10 @@
 #' @export
 
 
-# This generates the man/*.Rd help files and updates NAMESPACE
+ # This generates the man/*.Rd help files and updates NAMESPACE
 
 mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
-                    method = c("svd", "chol", "eigen"), delta = 0.5){
+                    method = c("svd", "chol", "eigen"), delta = 0.5, het = TRUE){
   if (!is.matrix(mu)){
     stop(paste("Mu should be a LxP matrix. An object of class", class(mu), "is not valid"))
   }
@@ -36,7 +38,6 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
   }
   # Create empty list to store each of the dimensions
   l_rand <- list()
-  rand <- matrix(rnorm(N*P*L), N*P, L)
   if (isFALSE(grid)){
     grid = seq(0,1, by = 1/(P-1))
   }
@@ -46,20 +47,20 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
     for (i in 1:L){
       if (covar1[i] == "sq"){
         kernel <- function(a, b, delta) {
-          as.matrix(outer(a, b, function(i, j) exp(-((i - j)^2) / ((delta)^2))))
+          as.matrix(outer(a, b, function(i, j) 2*exp(-((i - j)^2) / ((delta)^2))))
         }
       }
       else if (covar1[i] == "abs"){
         kernel <- function(a, b, delta) {
-          as.matrix(outer(a, b, function(i, j) exp(-(abs(i - j)) / ((delta)))))
+          as.matrix(outer(a, b, function(i, j) 2*exp(-(abs(i - j)) / ((delta)))))
         }
       }
-      # if (isTRUE(het)){
-      #  covar[[i]] = kernel(grid, grid, delta) - diag(abs((grid)-0.5))
-      # }
-      # else{
-         covar[[i]] = kernel(grid, grid, delta)
-      # }
+      if (isTRUE(het)){
+       covar[[i]] = kernel(grid, grid, delta) - diag(abs((grid)-0.5))
+      }
+      else{
+        covar[[i]] = kernel(grid, grid, delta)
+      }
     }
   }
   # Generate the correlation matrix between dimensions
@@ -71,13 +72,13 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
   m_rho[lower.tri(m_rho)] <- rho
 
   # Generate random normal uncorrelated normal values as a base
-
-  c<-covar
+  rand <- matrix(rnorm(N*P*L), N*P, L)
 
   if (method == "chol"){
-    cholm_rho<-chol(Matrix::nearPD(m_rho)$mat, pivot = TRUE)
-    f_rho<-(cholm_rho[,attr(cholm_rho, "pivot")])
+
     # Apply correlation to the random values
+    m_rand <- rand %*% chol(m_rho)
+
     # For each variable, apply autocorrelation to the random values.
     for (i in 1:L){
       if(is.null(covar[[i]])){
@@ -85,27 +86,36 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
         message(paste("Running with Identity matrix of dimension", P, "as covariance for component", (i)))
       }
       # I used nearPD to force the positive-definiteness of the covariance function
-      cv <- chol(as.matrix(Matrix::nearPD(covar[[i]], keepDiag = TRUE)$mat), pivot = TRUE)
-      pivot<-attr(cv, "pivot")
-      Z = t((cv[,order(pivot)]))
-      c[[i]] = Z%*%t(Z)
-      ed <- eigen(covar[[i]])
-      l_rand[i]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) +(matrix(rand%*% t(f_rho), N, P)  %*% t(Z))
+      cv <- chol(as.matrix(Matrix::nearPD(covar[[i]], keepDiag = TRUE)$mat))
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) +(matrix(m_rand[,i], N, P) %*% cv)
     }
   }
-  if (method == "eigen"){
-    e_rho <- eigen(m_rho)
-    f_rho <- e_rho$vectors %*% diag(sqrt(pmax(e_rho$values, 0)))
-    #Apply correlation to the random values
+  if (method == "svd"){
+
+    # Apply correlation to the random values
+    m_rand <- rand %*% t(svd(m_rho)$v %*% (t(svd(m_rho)$u) * sqrt(pmax(svd(m_rho)$d, 0))))
+    #print(str(m_rand))
     for (i in 1:L){
       if(is.null(covar[[i]])){
         covar[[i]] <- diag(,P,P)
         message(paste("Running with Identity matrix of dimension", P, "as covariance for component", (i)))
       }
-      ed <- eigen(covar[[i]])
-      Z <- ed$vectors%*%diag(sqrt(pmax(ed$values, 0)))
-      c[[i]]<-Z%*%t(Z)
-      l_rand[i]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) + (matrix(rand%*% f_rho, N, P)  %*% t(Z))
+      svd <- svd(covar[[i]])
+      cv <- t(svd$v %*% (t(svd$u) * sqrt(pmax(svd$d, 0))))
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,])+ (matrix(m_rand[,i], N, P) %*% cv)
+    }
+  }
+  if (method == "eigen"){
+    e_rho <- eigen(m_rho, symmetric <- TRUE)
+    m_rand <- rand %*% (e_rho$vectors %*% diag(sqrt(pmax (e_rho$values, 0))) %*% t(e_rho$vectors))
+    for (i in 1:L){
+      if(is.null(covar[[i]])){
+        covar[[i]] <- diag(,P,P)
+        message(paste("Running with Identity matrix of dimension", P, "as covariance for component", (i)))
+      }
+      ed <- eigen(covar[[i]], symmetric <- TRUE)
+      cv <- (ed$vectors %*% diag(sqrt(pmax (ed$values, 0))) %*% t(ed$vectors))
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) + (matrix(m_rand[,i], N, P) %*% cv)
     }
   }
   return(l_rand)
