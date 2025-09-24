@@ -46,15 +46,29 @@ $$X'(t) = (X(t) - \mu(t)) S^{-1/2}$$ And, as a consequence,
 
 $$ \mathbb{Z}_X (t) = X(t) - \mu(t) =  X'(t) S^{1/2}$$
 
-It is possible to get to $\mathbb{Z}_X(t)$ starting from $\Sigma_X$ through factorization, given that $\Sigma_X$ is positive semidefinite.
+It is possible to get to $\mathbb{Z}_X(t)$ starting from $\Sigma_X$ through factorization, given that $\Sigma_X$ is positive definite.
 
 #### Cholesky Decomposition
 
-If $\Sigma_X$ is positive semidefinite, the Cholesky decomposition enables the factorization
+If $\Sigma_X$ is positive definite, the Cholesky decomposition enables the factorization
 
-$$\Sigma_X = QQ^T=\Sigma_X^{1/2}\Sigma_X^{1/2^T}$$
+$$\Sigma_X = Q_CQ_C^T=\Sigma_{X_C}^{1/2}\Sigma_{X_C}^{1/2^T}$$
 
-Given that $\Sigma_X$ is a covariance matrix, by definition it should be definite semipositive and, hence, enable for the implementation of the Cholesky decomposition. Nevertheless, in practice the covariance matrix can have negative values due to numerical precision.
+Given that $\Sigma_X$ is a covariance matrix, by definition it should be definite semipositive and, hence, enable for the implementation of the Cholesky decomposition. Nevertheless, in practice the covariance matrix can degenerate due to linear dependency. An option to this is either using pivoting for generating the Cholesky decomposition of a positive semidefinite matrix, or using the function `Matrix::nearPD` to find the nearest Positive Definite matrix. For our simulations, the pivoting method generated a higher deviation from the original matrix than the NearPD method.
+
+Another option, implemented in `mvtnorm::rmvnorm` starts from eigendecomposition, replacing the negative eigenvalues to 0.
+
+#### Eigendecomposition
+
+For any diagonalizable matrix,
+
+$$\Sigma_X = P\Lambda P^T=  P\Lambda^{1/2}\Lambda^{1/2}T P^T = Q_E Q_E^T= \Sigma_{X_E}^{1/2}\Sigma_{X_E}^{1/2^T}$$
+
+Where P is a matrix with the eigenvalues of $\Sigma_X$ as columns, and $\Lambda=\vec{\lambda}I$ is a diagonal matrix with the eigenvalues in its diagonal. For negative values of $\lambda_i$, $\Lambda^{1/2} =\vec{\lambda^{1/2}}I $ is not real. To correct this issue in the simulation, we replace by 0 the negative eigenvalues.
+
+##### Remark
+
+Since \$Q_E \neq Q_C \$, the actual simulated values are not equal, even when the sample covariance matrix is similar.
 
 ## Defining $\Sigma_X$
 
@@ -65,3 +79,178 @@ $\Sigma_X$ can be simulated as any positive semidefinite matrix. Nevertheless, *
 -   Cuadratic Exponential Decay: $$ \Sigma_{ij}  = e^{-\frac{(t_1 - t_2)^2} { \delta^2}}$$
 
 For all $t_1, t_2$ between 0 and 1.
+
+#### Bivariate (Multivariate) correlation
+
+For the second one, it is assume that the correlation between variables is uniform along the domain $t$. This means that if there are two functional variables, there is only one value for the correlation $rho$, and a correlation matrix like
+
+$$\rho_X= \begin{bmatrix}
+1&\rho_{12}\\
+\rho_{12} & 1
+\end{bmatrix}$$
+
+### Simulation algorithm
+
+The algorithm for the simulation is the following:
+
+1.  Generate NxPxL i.i.d. random values from a Normal (0,1) distribution, where N = number of curves, P = Number of points inside each curve, L = number of variables (number of different mean curves).
+2.  Build $\rho_x$ and $\Sigma_x$, and $I*\vec{|t-0.5|}$, if necessary. Those are the covariance kernel components.
+3.  Factorize the three matrices in (2) using the same technique (either Eigendecomposition or Choleski).
+4.  Perform multiplication of the Factors of the matrices to obtain $\mathbb{Z}_X$
+
+## Examples
+
+The following code chunk shows an example for only one bivariate curve (light curves are simulated.)
+
+$$\mu_1 = 3*\cos(2\pi t) \\ \mu2 = 10-3*\cos(2\pi t) \\ \rho = 1 \\ N=1 \\ \text{exp. decay = Cuadratic}$$
+
+```{r 1st}
+remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+## Define a grid (only useful for mean and plotting)
+grid <-seq(0,1, by = 1/99)
+
+## Define a mean vector
+mu1 <- 3*t(cos(2*pi*grid)) #+ t(cos(grid2))
+mu2<- 10+ -3*t(cos(2*pi*grid))
+mu = rbind(mu1, mu2)
+
+## Build bivariate functional data
+
+Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("sq", "sq"), rho =1)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+# Legend
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+As can be seen, the deviation from the mean is forced to be equal for both variables. This is not the case if the $\rho$ parameter is modified. The following plot shows a case with $\rho = 0.5$
+
+```{r 2nd}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("sq", "sq"), rho =0.5)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+In this case the behavior is different but possitively related, with negative deviations from the mean occurring in both sides at the same time.
+
+Changing the exponential decay factor also gives us a different view of the data. The following has the original specification (with $\rho = 1$) but with absolute exponential decay rate.
+
+```{r 3rd}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+Generating 100 observations would lead to the following behavior:
+
+```{r 4th}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(100, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+Modifying the heteroskedasticity parameter to TRUE, we have observations that are more variable near the center:
+
+```{r 5th}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(100, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
