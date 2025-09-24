@@ -90,7 +90,7 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
       Z = t((cv[,order(pivot)]))
       c[[i]] = Z%*%t(Z)
       ed <- eigen(covar[[i]])
-      l_rand[i]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) +(matrix(rand%*% t(f_rho), N, P)  %*% t(Z))
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) +(matrix(rand%*% t(f_rho), N, P)  %*% t(Z))
     }
   }
   if (method == "eigen"){
@@ -105,7 +105,7 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
       ed <- eigen(covar[[i]])
       Z <- ed$vectors%*%diag(sqrt(pmax(ed$values, 0)))
       c[[i]]<-Z%*%t(Z)
-      l_rand[i]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) + (matrix(rand%*% f_rho, N, P)  %*% t(Z))
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) + (matrix(rand%*% f_rho, N, P)  %*% t(Z))
     }
   }
   return(l_rand)
