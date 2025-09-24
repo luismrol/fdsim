@@ -1,0 +1,67 @@
+---
+title: "Functional data simulation"
+author: "Luis Miguel Roldan"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    #latex_engine: xelatex
+    toc: true
+    citation_package: natbib
+    keep_tex: true
+
+bibliography: lib.bib
+header-includes:
+  - \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+  - \usepackage{xcolor}
+  - \usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+  - \usepackage{setspace}
+  - \doublespacing 
+---
+
+Functional observations are values or vectors of a function $X(t)$ mapped on values $t \in T$. The mean function of the process $X(t)$ can be defined as $\mu(t) = \text{E}(X(t))$ and the covariance function, $\Sigma(s,t) = \text{cov}_X(s, t)$. The sample mean function can be estimated as $$\bar{x}(t) = \frac{1}{N}\sum_{i=1}^Nx_i(t)$$,
+
+Where N is the sample size, and the covariance function as:
+
+$$\text{cov}_X(t_1, t_2) = \frac{1}{N-1}\sum_{i=1}^N [x_i(t_1)- \bar{x}(t_1)] [x_i(t_2)- \bar{x}(t_2)] $$.
+
+A transformation $\mathbb{Z}_X(t) = X(t) - \bar{x}(t)$ can be used to define the sample covariance matrix estimator
+
+$$S_X = \frac{1}{N-1} I_P \mathbb{Z}_X(t)\mathbb{Z}_X^T(t)$$ where $P$ is the number of different $t\in T$, $N$ is the number of functional observations and $I_P$ is the identity matrix of order $P$. The $t_1, t_2$ entry of the estimated sample covariance matrix is the covariance function evaluated at $t_1, t_2$.
+
+Each observation of the univariate functional process is defined as
+
+$$x_i(t) = \mu_X + \mathbb{Z}_{X_i}(t)$$
+
+If we assume that $\mathbb{Z}_{X_i} \sim \mathbf{N} (0,\Sigma_X)$ , a univariate functional sample can be simulated based on a multivariate normal distribution
+
+$$X(t) \sim \mathbf{N}(\mu_X(t), \Sigma_X)$$
+
+Starting from a standard normal multivariate process
+
+$$X'(t) \sim \mathbf{N}(\vec0, \mathbb{I}_{P\times P})$$
+
+$X(t)$ can be simulated by establishing
+
+$$X'(t) = (X(t) - \mu(t)) S^{-1/2}$$ And, as a consequence,
+
+$$ \mathbb{Z}_X (t) = X(t) - \mu(t) =  X'(t) S^{1/2}$$
+
+It is possible to get to $\mathbb{Z}_X(t)$ starting from $\Sigma_X$ through factorization, given that $\Sigma_X$ is positive semidefinite.
+
+#### Cholesky Decomposition
+
+If $\Sigma_X$ is positive semidefinite, the Cholesky decomposition enables the factorization
+
+$$\Sigma_X = QQ^T=\Sigma_X^{1/2}\Sigma_X^{1/2^T}$$
+
+Given that $\Sigma_X$ is a covariance matrix, by definition it should be definite semipositive and, hence, enable for the implementation of the Cholesky decomposition. Nevertheless, in practice the covariance matrix can have negative values due to numerical precision.
+
+## Defining $\Sigma_X$
+
+$\Sigma_X$ can be simulated as any positive semidefinite matrix. Nevertheless, *smoothness* is usually referred as a property of functional data \citep{Ramsay2005}, as compared to multivariate or time series data. To model smoothness, an exponential decay function is used in simulation, with two possible specifications
+
+-   Absolute Exponential Decay: $$ \Sigma_{ij}  = 
+    e^{-\frac{|t_1 - t_2|} { \delta}}$$
+-   Cuadratic Exponential Decay: $$ \Sigma_{ij}  = e^{-\frac{(t_1 - t_2)^2} { \delta^2}}$$
+
+For all $t_1, t_2$ between 0 and 1.

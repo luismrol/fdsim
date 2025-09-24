@@ -1,0 +1,114 @@
+---
+title: "uni_depth = Univariate and integrated depth calculation for a given data matrix"
+author: "Luis Miguel Roldan"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+This document explains the depth calculation function for univariate and integrated for multivariate and univariate functional data, uni_depth, from the package fdsim.
+
+## Inputs:
+
+-   data: a NxP matrix with N observations and P columns. Each column is considered a different variable / dimension.
+-   Depth: a string saying the depth that is going to be calculated. options are "mahalanobis", "tukey", "projection", "simplicial".
+
+## Outputs:
+
+-   depth: A NxP matrix containing the depth for each univariate value
+-   Outlyingness: a NxP matrix containing the outlyingness for each univariate value $\text{Out} = (\text{depth}+10^{-10})^{-1}-1$
+-   Mean_depth: row-wise mean of depth
+-   Mean_out: row-wise mean of depth
+-   mindepth: row-wise minimum of depth
+-   sd_depth: standard deviation of depth
+
+## Algorithm:
+
+Each option `depth` calculates a different depth function. For each column in the matrix `data`, the function computes the univariate depth of each row with respect to the sample. Then, it calculates outlyingness as 
+$$\text{Out} = (\text{depth}+10^{-10})^{-1}-1$$
+the $10^{-10}$ is added to avoid infinite values of outlyingness at depth 0 (A recurrent issue for rank depths). This process outputs a matrix of depth and a matrix of outlyingness. After this, `mean_depth` and `mean_out` vectors are calculated, which are the row-wise mean of depth a and outlyingness, respectively, and that coincide with the integrated depth under the assumption of a contiuous $w(t)$ and a domain $t \in (0,1)$. Two additional outputs of the function are `mindepth` the minimum depth row-wise, and `sd_depth`, the standard deviation of the depth. 
+
+Options for depth are 
+
+#### Mahalanobis Depth
+$$\text{MD}(x|X)=\bigg[1+\frac{(x-\mu)^2}{\sigma^2}\bigg]^{-1}$$
+Where $\mu, \sigma^2$ are the mean and variance estimators, respectively.
+
+#### Projection Depth
+
+$$\text{PD}_O(x;X) = \bigg[1+\frac{ |x - \text{Med}(X)|}{\text{MAD}( X)}\bigg]^{-1}$$
+where Med is the median, MAD is the Median Absolute Deviation, i.e. the median of the absolute deviations from the median. 
+
+
+#### Halfspace Depth
+
+$$\text{HD}_O(x;X) = \min(P(x), 1-P(x))$$
+
+where $P(x) = P(X\leq x)$
+
+#### Simplicial Depth
+
+$$\text{SD}(x;X) = P\big(x\in \text{conv}(X_1,...,X_{P})\big)$$
+
+Integrated univariate functional version is Modified Band Depth. 
+
+### Examples
+
+In this example, we generate 50 curves from a central sample, one magnitude outlier and one shape outlier, and compare the results. 
+
+```{r plot}
+remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+## Define a grid (only useful for mean and plotting)
+grid <-seq(0,1, by = 1/99)
+
+## Define a mean vector
+mu1 <- t(2*cos(2*pi*grid)) #+ t(cos(grid2))
+mu2<- t(2*sin(2*pi*grid))
+mu3<- 5+t(2*cos(2*pi*grid))
+mu = rbind(mu2, mu3) 
+
+## Build bivariate functional data
+## Centered data
+Y<-mfd_sim(50, mu1, method = c("eigen"), covar = c("abs", "sq"), rho =0, het = FALSE)
+Y_out<-mfd_sim(1, mu, method = c("eigen"), covar = c("abs", "abs"), rho =0, het = FALSE)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Univariate functional data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y_out[[1]])){
+  lines(grid, Y_out[[1]][i,], col = "red")
+}
+for (i in 1:nrow(Y_out[[2]])){
+  lines(grid, Y_out[[2]][i,], col = "green")
+}
+
+lines(grid, mu1[1,], col = "blue")
+# Legend
+legend("topright",
+       legend = c("Base (typical) group", "Outlier - shape", "Mean (typical)", "Outlier - Magnitude"),
+       col = c("gray", "red", "blue", "green" ),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+
+```
+
+Now, we calculate the depth of each curve with respect to the sample. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+data<-rbind (Y[[1]], Y_out[[1]], Y_out[[2]], mu1)
+depth_m<-uni_depth(data, "maha")
+depth_t<-uni_depth(data, "tukey")
+depth_p<-uni_depth(data, "proj")
+
+depths_table <- data.frame("variable" = c("mean", "shape outlier", "magnitude outlier"), "mahalanobis depth" = c(depth_m$mean_depth[53],depth_m$mean_depth[51],depth_m$mean_depth[52]), "tukey depth" = c(depth_t$mean_depth[53],depth_t$mean_depth[51],depth_t$mean_depth[52]), "projection depth" = c(depth_p$mean_depth[53],depth_p$mean_depth[51],depth_p$mean_depth[52]), "variation of mahalanobis depth" = c(depth_m$sd_depth[53],depth_m$sd_depth[51],depth_m$sd_depth[52]), "variation of tukey depth" = c(depth_t$sd_depth[53],depth_t$sd_depth[51],depth_t$sd_depth[52]), "variation of projection depth" = c(depth_p$sd_depth[53],depth_p$sd_depth[51],depth_p$sd_depth[52]))
+
+kableExtra::kable(depths_table)
+
+
+```
+

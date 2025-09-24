@@ -1,0 +1,352 @@
+---
+title: "Multivariate functional simulation function"
+author: "Luis Miguel Roldan"
+date: "`r Sys.Date()`"
+output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Functional observations are values or vectors of a function $X(t)$
+mapped on values $t \in T$. Defining the sample mean of a functional
+variable as
+
+$$\bar{x}(t) = \frac{1}{N}\sum_{i=1}^Nx_i(t)$$
+
+Where N is the sample size, and the covariance function for functional
+data as:
+
+$$\text{cov}_X(t_1, t_2) = \frac{1}{n-1}\sum_{i=1}^n [x_i(t_1)- \bar{x}(t_1)] [x_i(t_2)- \bar{x}(t_2)] $$
+
+A transformation $\mathbb{Z}_X(t) = X(t) - \bar{x}(t)$ can be used to
+define the covariance matrix
+
+$$\Sigma_X = \frac{1}{n-1} I_P \mathbb{Z}_X(t)\mathbb{Z}_X^T(t)$$ where
+$P$ is the number of different $t\in T$, $n$ is the number of functional
+observations and $I_P$ is the identity matrix of order $P$. The
+$t_1, t_2$ entry of the covariance matrix is the covariance function
+evaluated at $t_1, t_2$.
+
+Each observation of the univariate functional process is defined as
+
+$$x_i(t) = \mu_X + \mathbb{Z}_{X_i}(t)$$
+
+If we assume that $\mathbb{Z}_{X_i} \sim \mathbf{N} (0,\Sigma_X)$ , a
+univariate functional sample can be simulated based on a multivariate
+normal distribution
+
+$$X(t) \sim \mathbf{N}(\mu_X(t), \Sigma_X)$$
+
+Starting from a standard normal multivariate process
+
+$$X'(t) \sim \mathbf{N}(\vec0, \mathbb{I}_{P\times P})$$
+
+$X(t)$ can be simulated by defining
+
+$$ \mathbb{Z}_X (t) = X'(t) \Sigma_X^{1/2}$$
+
+It is possible to get to $\mathbb{Z}_X(t)$ starting from $\Sigma_X$
+through factorization, in the case in which $\Sigma_X$ is semidefinite
+positive.
+
+#### Cholesky Decomposition
+
+If $\Sigma_X$ is positive semidefinite, the Cholesky decomposition
+enables the factorization
+
+$$\Sigma_X = QQ^T=\Sigma_X^{1/2}\Sigma_X^{1/2^T}$$
+
+#### Eigenvalue decomposition
+
+For diagonalizable square matrices,
+
+$$\Sigma_X = Q \Lambda Q^{-1}$$ where $Q, \Lambda$ are respectively the
+matrix of eigenvectors and a matrix with the corresponding eigenvalues
+as elements of the main diagonal.
+
+For a symmetric matrix as $\Sigma_X$,
+
+$$\Sigma_X = Q \Lambda Q^{T} = Q \Lambda^{1/2}\Lambda^{1/2^T} Q^{T} = \Sigma_X^{1/2}\Sigma_X^{1/2^T}$$
+where $\Lambda^{1/2}$ is a square $P\times P$ matrix with the square
+root of the eigenvalues on its main diagonal.
+
+Eigenvalue decomposition entails the assumption of all eigenvalues being
+nonnegative. Hence, for the simulation, negative eigenvalues are
+replaced by 0.
+
+#### Singular Value Decomposition
+
+$$\Sigma_X=UD V^T$$
+
+## Inputs:
+
+-   N : Number of curves to be simulated
+-   mu: an LxP matrix containing L mean functions
+-   Grid: either FALSE or a vector with the grid. Must coincide with the
+    number of columns in mu
+-   covar: Either a list of the univariate functional covariance
+    matrices or a vector of strings containing the specification for
+    each covariance matrix's decay structure. There are three options:
+    Inputing the square matrix corresponding to the full covariance
+    matrix, absolute value exponential decay or cuadratic exponential
+    decay.
+-   method: The method for decomposing the covariance matrix. Could be
+    Singular Value Decomposition (svd), Eigenvalue Decomposition (eigen)
+    or Choleski decomposition (chol).
+-   het: Logical. Should a heteroskedasticity element be included? If
+    True, the covariance matrix diagonal is modified.
+
+## Outputs:
+
+-   A list of NxP matrices, corresponding to each univariate functional
+    sample.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+
+```
+
+## Elements of the simulation
+
+The simulated dataset is defined based on a mean vector for each of the
+variances.
+
+We start from the following definition of a set of functional variables
+$X(t), \ Y(t)$ :
+
+$$X(t) =\mu_X(t) + \mathbb{Z}_X(t)$$\
+$$Y(t) = \mu_Y(t) + \mathbb{Z}_Y (t)$$ If we consider each observation
+of each of the variables $X(t), \ Y(t)$ as a row vector, then the
+distance from the mean is also a row vector and the matrix with the
+product of the distances from the mean at each combination $t_i, t_j$
+would be given by $[X_i-\mu]^T[X_i-\mu]$. Hence, The covariance matrix
+of each variable can be calculated as
+
+$$\Sigma_{x} = (N-1)^{-1}\mathbb{Z}_X^T\mathbb{Z}_X$$
+
+The matrix $\Sigma_x$ can be factorized using either a choleski
+decomposition, a singular value decomposition or an eigenvalue
+decomposition. There are three elements to be considered in the
+simulation of the covariance matrix: - The covariance between time
+points inside an observation - The correlation between points on
+different variables. - The main diagonal of the variance of each curve.
+
+#### Covariance matrix of the univariate functional dataset
+
+To address the first issue, an exponential decay model is proposed with
+two specifications:
+
+-   Absolute Exponential Decay:
+    $$ \Sigma_{ij}  = 2\exp^{-\frac{|i - j|} { \delta}}$$
+-   Cuadratic Exponential Decay:
+    $$ \Sigma_{ij}  = 2\exp^{-\frac{(i - j)^2} { \delta^2}}$$
+
+For a grid of numbers (i, j) between 0 and 1. Note that the main
+diagonal of this matrix will have a value of 2. This is to allow for
+some variance even after considering heteroskedasticity.
+
+#### Bivariate (Multivariate) correlation
+
+For the second one, it is assume that the correlation between variables
+is uniform along the domain $t$. This means that if there are two
+functional variables, there is only one value for the correlation $rho$,
+and a correlation matrix like
+
+$$\rho_X= \begin{bmatrix}
+1&\rho_{12}\\
+\rho_{12} & 1
+\end{bmatrix}$$
+
+#### Heteroskedasticity
+
+If we keep only the two first steps, assuming an iid normal generator as
+base process, there would be no change in the variance along the curve.
+If we want to modify that, we should add a heteroskedasticity term. In
+this case, the default heteroskedastic setting substracts $|t-0.5|$ to
+each element of the main diagonal, considering $t\in[0,1]$, and the
+variance is maximized at the center of the domain of $t$
+
+### Simulation algorithm
+
+The algorithm for the simulation is the following:
+
+1.  Generate NxPxL i.i.d. random values from a Normal (0,1)
+    distribution, where N = number of curves, P = Number of points
+    inside each curve, L = number of variables (number of different mean
+    curves).
+2.  Build $\rho_x$ and $\Sigma_x$, and $I*\vec{|t-0.5|}$, if necessary.
+    Those are the covariance kernel components.
+3.  Factorize the three matrices in (2) using the same technique (either
+    svd, eigendecomposition or Choleski).
+4.  Perform multiplication of the Factors of the matrices to obtain
+    $\mathbb{Z}_X$
+
+## Examples
+
+The following code chunk shows an example for only one bivariate curve
+(light curves are simulated.)
+
+$$\mu_1 = 3*\cos(2\pi t) \\ \mu2 = 10-3*\cos(2\pi t) \\ \rho = 1 \\ N=1 \\ \text{exp. decay = Cuadratic}$$
+
+```{r 1st}
+remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+## Define a grid (only useful for mean and plotting)
+grid <-seq(0,1, by = 1/99)
+
+## Define a mean vector
+mu1 <- 3*t(cos(2*pi*grid)) #+ t(cos(grid2))
+mu2<- 10+ -3*t(cos(2*pi*grid))
+mu = rbind(mu1, mu2)
+
+## Build bivariate functional data
+
+Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("sq", "sq"), rho =1, het = FALSE)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+# Legend
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+As can be seen, the deviation from the mean is forced to be equal for
+both variables. This is not the case if the $\rho$ parameter is
+modified. The following plot shows a case with $\rho = 0.5$
+
+```{r 2nd}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("sq", "sq"), rho =0.5, het = FALSE)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+In this case the behavior is different but possitively related, with
+negative deviations from the mean occurring in both sides at the same
+time.
+
+Changing the exponential decay factor also gives us a different view of
+the data. The following has the original specification (with $\rho = 1$)
+but with absolute exponential decay rate.
+
+```{r 3rd}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1, het = FALSE)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+Generating 100 observations would lead to the following behavior:
+
+```{r 4th}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(100, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1, het = FALSE)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
+
+Modifying the heteroskedasticity parameter to TRUE, we have observations
+that are more variable near the center:
+
+```{r 5th}
+#remotes::install_github("luismrol/fdsim")
+library(fdsim)
+set.seed(123)
+
+Y<-mfd_sim(100, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1, het = TRUE)
+
+colnames(Y[[1]])<-grid
+plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
+for (i in 1:nrow(Y[[1]])){
+  lines(grid, Y[[1]][i,], col = "gray")
+}
+for (i in 1:nrow(Y[[2]])){
+  lines(grid, Y[[2]][i,], col = "pink")
+}
+lines(grid, mu[1,], col = "black")
+lines(grid, mu[2,], col = "red")
+legend("topright",
+       legend = c("Group 1 simulated", "Group 2 simulated", 
+                  "Mean Group 1", "Mean Group 2"),
+       col = c("gray", "pink", "black", "red"),
+       lty = 1, lwd = c(0.5, 0.5, 2, 2), 
+       bty = "n", cex = 0.7)
+
+```
