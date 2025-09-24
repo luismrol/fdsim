@@ -3,7 +3,7 @@ title: "Functional data simulation"
 author: "Luis Miguel Roldan"
 date: "`r Sys.Date()`"
 output: 
-  pdf_document:
+  html_document:
     #latex_engine: xelatex
     toc: true
     citation_package: natbib
@@ -121,7 +121,7 @@ mu = rbind(mu1, mu2)
 
 Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("sq", "sq"), rho =1)
 
-colnames(Y[[1]])<-grid
+## colnames(Y[[1]])<-grid
 plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
 for (i in 1:nrow(Y[[1]])){
   lines(grid, Y[[1]][i,], col = "gray")
@@ -144,13 +144,13 @@ legend("topright",
 As can be seen, the deviation from the mean is forced to be equal for both variables. This is not the case if the $\rho$ parameter is modified. The following plot shows a case with $\rho = 0.5$
 
 ```{r 2nd}
-#remotes::install_github("luismrol/fdsim")
+remotes::install_github("luismrol/fdsim")
 library(fdsim)
 set.seed(123)
 
 Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("sq", "sq"), rho =0.5)
 
-colnames(Y[[1]])<-grid
+# colnames(Y[[1]])<-grid
 plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
 for (i in 1:nrow(Y[[1]])){
   lines(grid, Y[[1]][i,], col = "gray")
@@ -180,7 +180,7 @@ set.seed(123)
 
 Y<-mfd_sim(1, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1)
 
-colnames(Y[[1]])<-grid
+# colnames(Y[[1]])<-grid
 plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
 for (i in 1:nrow(Y[[1]])){
   lines(grid, Y[[1]][i,], col = "gray")
@@ -208,7 +208,7 @@ set.seed(123)
 
 Y<-mfd_sim(100, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1)
 
-colnames(Y[[1]])<-grid
+# colnames(Y[[1]])<-grid
 plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
 for (i in 1:nrow(Y[[1]])){
   lines(grid, Y[[1]][i,], col = "gray")
@@ -236,7 +236,7 @@ set.seed(123)
 
 Y<-mfd_sim(100, mu, method = c("eigen"), covar = c("abs", "abs"), rho =1)
 
-colnames(Y[[1]])<-grid
+# colnames(Y[[1]])<-grid
 plot(x= grid, y = Y[[1]][1,], col ="white", main = "Multivariate data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))
 for (i in 1:nrow(Y[[1]])){
   lines(grid, Y[[1]][i,], col = "gray")
