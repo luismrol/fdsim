@@ -76,7 +76,7 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
 
   if (method == "chol"){
     cholm_rho<-chol(Matrix::nearPD(m_rho)$mat, pivot = TRUE)
-    f_rho<-(cholm_rho[,attr(cholm_rho, "pivot")])
+    f_rho<-t(cholm_rho[,attr(cholm_rho, "pivot")])
     # Apply correlation to the random values
     # For each variable, apply autocorrelation to the random values.
     for (i in 1:L){
@@ -105,7 +105,7 @@ mfd_sim <- function(N, mu, grid = FALSE, covar = "sq", rho = 0,
       ed <- eigen(covar[[i]])
       Z <- ed$vectors%*%diag(sqrt(pmax(ed$values, 0)))
       c[[i]]<-Z%*%t(Z)
-      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) + (matrix(rand%*% f_rho, N, P)  %*% t(Z))
+      l_rand[[i]]<- (matrix(1, nrow = N, ncol = 1) %*% mu[i,]) + (matrix(rand%*% t(f_rho), N, P)  %*% t(Z))
     }
   }
   return(l_rand)
