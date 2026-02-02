@@ -10,8 +10,6 @@ uni_depth(data, depth = "maha")
 \item{data}{An NxP Matrix, from which a column-wise depth is calculated}
 
 \item{depth}{What depth is going to be used. Supported are Mahalanobis, Projection, Univariate Tukey and Simplicial}
-
-\item{out}{Should the associated outlyingness be also included in the result?}
 }
 \description{
 This function calculates column-wise univariate depths that would serve as inputs for integrate and geometric

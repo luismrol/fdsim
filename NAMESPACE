@@ -2,4 +2,6 @@
 
 export(mfd_sim)
 export(mfd_sim_h)
+export(sim_out)
 export(uni_depth)
+importFrom(funData,simFunData)
