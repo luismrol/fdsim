@@ -19,7 +19,7 @@
 c_matrix<- function(data, method){
   output<-do.call(rbind, lapply(ldata, function(data, class=NULL, method ){
     if (is.null(class)){
-      class<-data[,ncol(data)]
+      class<-apply(data[,ncol(data)],2, as.numeric)
       data<-data[,(1:ncol(data)-1)]
     }
     tp<-NA
