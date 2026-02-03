@@ -35,11 +35,11 @@ sim_out<-function(nrep, N, p, moderate = TRUE, perc_out = c(0,0)){
   }
   perc_amp<-perc_out[1]
   perc_shape<-perc_out[2]
-  class<-array()
   ldata<-list()
   for (i in 1:nrep){
     fdata1<-funData::simFunData(argvals, M=10, "Fourier", eValType = "exponential", N=N)
     sdata<-fdata1$simData@X
+    class<-character(nrow(sdata))
     for (j in 1:nrow(sdata)){
       if (j<=(1-perc_amp-perc_shape)*nrow(sdata)){
         sdata[j,]<-sdata[j,]+mu_t
@@ -52,7 +52,7 @@ sim_out<-function(nrep, N, p, moderate = TRUE, perc_out = c(0,0)){
         sdata[j,]<-sdata[j,]+shape
         class[j]<-"3.Shape"
       }    }
-    ldata[[i]] <- cbind(sdata, class)
+    ldata[[i]] <- list("data" = sdata, "class" = class)
   }
   return(ldata)
 }
