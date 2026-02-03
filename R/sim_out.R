@@ -4,7 +4,6 @@
 #' This function uses funData package to generate univariate functional observations
 #' with different types of outliers and different degrees of contamination
 #'
-#'
 #' @param nrep    Number of iterations to be performed
 #' @param N       Number of observations at each iteration
 #' @param p       Number of discretizations for t
@@ -13,7 +12,6 @@
 #' observations outlying in each case.
 #' @return A list of dimension nrep of simulated functional
 #' @importFrom funData simFunData
-
 #' @export
 
 
