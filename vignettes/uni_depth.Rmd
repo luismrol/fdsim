@@ -55,7 +55,7 @@ Integrated univariate functional version is Modified Band Depth.
 
 In this example, we generate 50 curves from a central sample, one magnitude outlier and one shape outlier, and compare the results. 
 
-```{r plot}
+```{r plot, echo=FALSE}
 remotes::install_github("luismrol/fdsim")
 library(fdsim)
 set.seed(123)
@@ -71,8 +71,8 @@ mu = rbind(mu2, mu3)
 
 ## Build bivariate functional data
 ## Centered data
-Y<-mfd_sim(50, mu1, method = c("eigen"), covar = c("abs", "sq"), rho =0, het = FALSE)
-Y_out<-mfd_sim(1, mu, method = c("eigen"), covar = c("abs", "abs"), rho =0, het = FALSE)
+Y<-mfd_sim(50, mu1, method = c("eigen"), covar = c("abs", "sq"), rho =0)#, het = FALSE)
+Y_out<-mfd_sim(1, mu, method = c("eigen"), covar = c("abs", "abs"), rho =0)#, het = FALSE)
 
 colnames(Y[[1]])<-grid
 plot(x= grid, y = Y[[1]][1,], col ="white", main = "Univariate functional data", ylab = "value", ylim = c(min(mu)-3,max(mu)+3))

@@ -16,12 +16,15 @@
 #' @export
 
 
-boxplot_outliers<-function(data, depths_vector, inf_factor=1.5){
+boxplot_outliers<-function(data, depth = "projection", inf_factor=1.5){
 # bulding rank statistics
 if (depth == "projection"){
   depths_vector=fdaoutlier::projection_depth(data)
-} else
-{depths_vector = depth}
+} else if (depth == "maha_mean"){
+  depths_vector<-fdsim::uni_depth(data, depth = "maha")$mean_depth
+}else if (depth == "maha_min"){
+  depths_vector<-fdsim::uni_depth(data, depth = "maha")$mindepth
+}
 index=order(depths_vector, decreasing=T)
 # Get the size of half the sample
 m=floor(length(depths_vector)*0.5)

@@ -1,58 +1,38 @@
-#' Simulation algorithm for multivariate functional data for analyzing heterogeneous outliers
+#' Simulation algorithm for univariate functional data with heterogeneous outliers
 #'
 #' @description
-#' This function uses funData package to generate univariate functional observations
-#' with different types of outliers and different degrees of contamination
+#' This function uses `funData` package to generate univariate functional observations
+#' with different types of outliers and different degrees of contamination.
 #'
-#' @param nrep    Number of iterations to be performed
-#' @param N       Number of observations at each iteration
-#' @param p       Number of discretizations for t
-#' @param moderate   (LOGICAL) Is it the moderate or the extreme scenario?
-#' @param perc_out a vector of two entries  c(amplitude, shape) for the proportion of
-#' observations outlying in each case.
-#' @return A list of dimension nrep of simulated functional
+#' @param N     Number of functional observations.
+#' @param Nt    Number of discrete time points.
+#' @param mean  A list of mean functions for base data and outlier types.
+#' @param prop  A vector of proportions for base data and outlier types.
+#' @param M     (Numeric) the number of eignevalues / eigenfunctions to be considered in simFunData
+#' @param eFunType (Character) the type of eigenfunction to be simulated for the random term. Types include "Poly", "PolyHigh", "Fourier", "FourierLin", and "Wiener"
+#' @param eValType (Character) The type of decay for the eigenvalues in the random component. Could be "linear", "exponential" or "wiener"
+#' @return      An Nx(P+1) matrix containing functional data and a class membership indicator for base data and outlier types.
 #' @importFrom funData simFunData
 #' @export
-
-
-# This generates the man/*.Rd help files and updates NAMESPACE
-
-sim_out<-function(nrep, N, p, moderate = TRUE, perc_out = c(0,0)){
-  if(length(perc_out)!= 2){
-    stop("Percentage of outliers should be a numeric vector of dimension 2")
-  }
-  if(!is.numeric(perc_out[1]) | !is.numeric(perc_out[2])){
-    stop("both elements in perc_out should be numeric")
-  }
-  argvals<-seq(0,1, by = 1/(p-1))
-  mu_t<-30*argvals*(1-argvals)^(2)
-  if (moderate == TRUE){
-    amplitude<-2*mu_t
-    shape<-5-10*((argvals)^(3/2))*(1-(argvals))^(3/2)
-  }else{
-    amplitude<-3*mu_t
-    shape<--20*(argvals^(3/2))*((1-argvals)^(3/2))
-  }
-  perc_amp<-perc_out[1]
-  perc_shape<-perc_out[2]
-  ldata<-list()
-  for (i in 1:nrep){
-    fdata1<-funData::simFunData(argvals, M=10, "Fourier", eValType = "exponential", N=N)
-    sdata<-fdata1$simData@X
-    class<-character(nrow(sdata))
-    for (j in 1:nrow(sdata)){
-      if (j<=(1-perc_amp-perc_shape)*nrow(sdata)){
-        sdata[j,]<-sdata[j,]+mu_t
-        class[j]<-"1.Base"
-      }  else if (j<=(1-perc_shape)*nrow(sdata)){
-        sdata[j,]<-sdata[j,]+amplitude
-        class[j]<-"2.Amplitude"
-      }
-      else{
-        sdata[j,]<-sdata[j,]+shape
-        class[j]<-"3.Shape"
-      }    }
-    ldata[[i]] <- list("data" = sdata, "class" = class)
-  }
-  return(ldata)
+#'
+simFunDataOut <- function(N, Nt, mean, prop, M=10, eFunType = "Fourier", eValType = "exponential"){
+  ## Generate the grid T
+  argvals <- seq(0,1, by = 1/(Nt-1))
+  ## translate the mu to the coordinates of T
+  f<-mean
+  mus_t <- lapply(f, function(f) f(argvals))
+  ## Put it in matrix
+  aux <- prop*N
+  mus_m <- do.call(
+    rbind,
+    Map(function(x, k) {
+      matrix(rep(x, each = k), ncol = length(x), byrow = TRUE)
+    }, mus_t, aux)
+  )
+  ## Generate epsilon
+  eps_m <- funData::simFunData(argvals, M=M, eFunType = eFunType, eValType = eValType, N=N)$simData@X
+  X <- as.matrix(mus_m + eps_m)
+  cl <- rep(seq_along(aux), times = aux)
+  X <- cbind(X, cl)
+  return(X)
 }

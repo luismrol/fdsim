@@ -16,18 +16,16 @@
 
 #' @export
 
-c_matrix<- function(data, method){
-  output<-do.call(rbind, lapply(ldata, function(data, class=NULL, method ){
-    if (is.null(class)){
-      class<-data$class
-      data<-data$data
-    }
+c_matrix<- function(ldata, method, depth){
+  output<-do.call(rbind, lapply(ldata, function(data){
+    class<-data$class
+    data<-data$data
     tp<-NA
     fp<-NA
     tn<-NA
     fn<-NA
     N = nrow(data)
-    outliers<-method(data)$outliers
+    outliers<-method(data, depth = depth)$outliers
     tp<-sum(as.numeric(outliers %in% which(class!="1.Base")))
     fp<-sum(as.numeric(outliers %in% which(class=="1.Base")))
     tn<-sum(as.numeric(which(c(1:N) %in% outliers == FALSE) %in%  which(class=="1.Base")))
