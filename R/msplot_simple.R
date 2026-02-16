@@ -12,7 +12,6 @@
 
 #' @export
 
-
 msplot_simple<-function(data){
   outliers<-fdaoutlier::msplot(data, plot = FALSE)$outliers
   return(list("data"=data, "outliers"=outliers))
