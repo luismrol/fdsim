@@ -1,15 +1,4 @@
-#' Confusion matrix indicators for outlier detection in functional data
-#'
-#' @description
-#' This is a function to implement and summarize the results of outlier detection in one sample of functional data, contaminated with
-#' outliers of different types.
-#'
-#'
-#' @param data data Output of simFunDataOut
-#' @param keep logical / if TRUE, return details of each iteration in a dataframe.
-#' @return
 
-#' @export
 
 ## Methods to evaluate
 library(fdaoutlier)
@@ -264,6 +253,21 @@ robpca_out<-function(data){
 ## Other
 ## Other packages include FUNTA, Centrality-stability plot among others.
 
+
+#'
+#' Confusion matrix indicators for outlier detection in functional data
+#'
+#' @description
+#' This is a function to implement and summarize the results of outlier detection in one sample of functional data, contaminated with
+#' outliers of different types.
+#'
+#'
+#' @param data data Output of simFunDataOut
+#' @param keep logical / if TRUE, return details of each iteration in a dataframe.
+#' @return
+
+#' @export
+
 compiler_out<-function(data, keep){
   stopifnot(
     "argument 'keep' must be logical" = !missing(keep) && is.logical(keep)
@@ -308,8 +312,6 @@ compiler_out<-function(data, keep){
   }
 }
 
-
-system.time(output<-compiler(data1, keep = FALSE))
 
 
 
