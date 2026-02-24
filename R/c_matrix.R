@@ -1,13 +1,13 @@
 #' Confusion matrix indicators for outlier detection in functional data
 #'
 #' @description
-#' This is a function to implement and summarize the results of outlier detection in one sample of functional data, contaminated with 
-#' outliers of different types. 
+#' This is a function to implement and summarize the results of outlier detection in one sample of functional data, contaminated with
+#' outliers of different types.
 #'
 #'
-#' @param  data / Output of simFunDataOut
-#' @keep logical / if TRUE, return details of each iteration in a dataframe. 
-#' @return 
+#' @param data data Output of simFunDataOut
+#' @param keep logical / if TRUE, return details of each iteration in a dataframe.
+#' @return
 
 #' @export
 
@@ -53,11 +53,11 @@ list_depths_at<-list(
   "depth.mode",
   "depth.RP",
   "depth.RT",
-  "depth.RPD", 
+  "depth.RPD",
   "depth.FSD"
 )
 # weighted
-## Options for depth are 
+## Options for depth are
 # depth.FM
 # depth.mode
 # depth.RP
@@ -88,9 +88,9 @@ boxplot_out <- function(data, depth){
     data,
     depth_method = depth
   )$outliers
-  
+
   vec <- as.numeric(seq_len(nrow(data)) %in% out)
-  
+
   tibble::as_tibble(
     setNames(list(vec), paste0("boxplot_out_", depth))
   )
@@ -113,7 +113,7 @@ bag_out<-function(data, depth){
 }
 
 
-### Sec trans out function 
+### Sec trans out function
 
 st1_out<-function(data, depth){
   out<-unique(unlist(fdaoutlier::seq_transform(data, depth_method = depth)))
@@ -137,7 +137,7 @@ box_out<-function(data){
   list_depths<-list_depths_box
   do.call(
     cbind,
-    lapply(list_depths, function(x) 
+    lapply(list_depths, function(x)
       boxplot_out(data1[, 1:100], x)
     )
   )
@@ -168,8 +168,8 @@ hd_out<-function(data){
   pc<-PCAproj(data, k = 2, center = median)$scores
   band<-ks::Hscv.diag(pc, binned=TRUE)
   den <-ks::kde(x = pc, H = 0.8 * band)
-  hdr1 <- hdrcde::hdr.2d(pc[, 1], pc[, 2], prob = c(0.01, 0.5), 
-                         list(x = den$eval.points[[1]], y = den$eval.points[[2]], 
+  hdr1 <- hdrcde::hdr.2d(pc[, 1], pc[, 2], prob = c(0.01, 0.5),
+                         list(x = den$eval.points[[1]], y = den$eval.points[[2]],
                               z = den$estimate))
   index <- hdr1$fxy <= min(hdr1$falpha)
   out <- which(as.vector(index))
@@ -180,14 +180,14 @@ hd_out<-function(data){
 }
 
 ## Bagplot real function
-## Possible depths: Halfspace depth, projection depth, skewness-adjusted projection depth 
+## Possible depths: Halfspace depth, projection depth, skewness-adjusted projection depth
 #and directional projection depth
 
 bagplot_out<-function(data){
   list_depths<-list_depths_bp
   do.call(
     cbind,
-    lapply(list_depths, function(x) 
+    lapply(list_depths, function(x)
       bag_out(data1[, 1:100], x)
     )
   )
@@ -200,7 +200,7 @@ seqtrans1_out<-function(data){
   list_depths<-list_depths_box
   do.call(
     cbind,
-    lapply(list_depths, function(x) 
+    lapply(list_depths, function(x)
       st1_out(data1[, 1:100], x)
     )
   )
@@ -210,7 +210,7 @@ seqtrans2_out<-function(data){
   list_depths<-list_depths_box
   do.call(
     cbind,
-    lapply(list_depths, function(x) 
+    lapply(list_depths, function(x)
       st2_out(data1[, 1:100], x)
     )
   )
@@ -226,7 +226,7 @@ atrim_w_out<-function(data){
   list_depths<-list_depths_at
   do.call(
     cbind,
-    lapply(list_depths, function(x) 
+    lapply(list_depths, function(x)
       at_we_out(data1[, 1:100], x)
     )
   )
@@ -236,7 +236,7 @@ atrim_t_out<-function(data){
   list_depths<-list_depths_at
   do.call(
     cbind,
-    lapply(list_depths, function(x) 
+    lapply(list_depths, function(x)
       at_trim_out(data1[, 1:100], x)
     )
   )
@@ -262,7 +262,7 @@ robpca_out<-function(data){
 }
 
 ## Other
-## Other packages include FUNTA, Centrality-stability plot among others. 
+## Other packages include FUNTA, Centrality-stability plot among others.
 
 compiler_out<-function(data, keep){
   stopifnot(
@@ -272,15 +272,15 @@ compiler_out<-function(data, keep){
   data<-data[,c(1:ncol(data)-1)]
   results<-cbind(truth,
                  box_out(data),
-                 msplot_out(data), 
+                 msplot_out(data),
                  outliergram_out(data),
-                 hd_out(data), 
-                 bagplot_out(data), 
-                 seqtrans1_out(data), 
-                 seqtrans2_out(data), 
-                 #atrim_w_out(data), 
-                 #atrim_t_out(data), 
-                 MUOD_out(data), 
+                 hd_out(data),
+                 bagplot_out(data),
+                 seqtrans1_out(data),
+                 seqtrans2_out(data),
+                 #atrim_w_out(data),
+                 #atrim_t_out(data),
+                 MUOD_out(data),
                  robpca_out(data))
   cmatrix_ind<-function(data) {
     pos<-data[which(data==1)]
@@ -297,7 +297,7 @@ compiler_out<-function(data, keep){
     f1_score<-2*(precision*recall/(precision+recall))
     rbind(tp, tn, fp,fn,total_accuracy, precision, recall, f1_score)
   }
-  metrics <- sapply(results, cmatrix_ind) 
+  metrics <- sapply(results, cmatrix_ind)
   if (keep == TRUE){
     output<-rbind(results, metrics)
     rownames(output)<-c(1:nrow(data), "tp", "tn", "fp","fn","total_accuracy", "precision", "recall", "f1_score")
