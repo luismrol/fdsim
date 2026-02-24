@@ -10,7 +10,7 @@
 # "bd": Band depth
 # "erld": Extreme rank length depth
 # "dq": Negative of Directional quantile
-
+library("rospca")
 boxplot_out<-function(data){
   out<-fdaoutlier::functional_boxplot(data)$outliers
   as.numeric(c(1:nrow(data)) %in% out)
@@ -32,7 +32,7 @@ hd_out<-function(data){
   pc<-robpca(data)$scores[,c(1,2)]
   band<-ks::Hscv.diag(pc, binned=TRUE)
   den <-ks::kde(x = pc, H = 0.8 * band)
-  index <- hdr1$fxy <= min(hdr1$falpha)
+  index <- den$fxy <= min(den$falpha)
   out <- which(as.vector(index))
   as.numeric(c(1:nrow(data)) %in% out)
 }
