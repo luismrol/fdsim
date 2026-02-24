@@ -16,18 +16,19 @@
 #' @export
 #'
 simFunDataOut <- function(N, Nt, mean, prop, M=10, eFunType = "Fourier", eValType = "exponential"){
+  stopifnot(" 'Mean' should be a list" = is.list(mean))
   ## Generate the grid T
   argvals <- seq(0,1, by = 1/(Nt-1))
   ## translate the mu to the coordinates of T
   f<-mean
-  mus_t <- lapply(f, function(f) f(argvals))
+  mus_t<-do.call(rbind, lapply(mean, function(f) f(argvals)))
   ## Put it in matrix
-  aux <- prop*N
+  aux<-N*prop
   mus_m <- do.call(
     rbind,
-    Map(function(x, k) {
-      matrix(rep(x, each = k), ncol = length(x), byrow = TRUE)
-    }, mus_t, aux)
+    Map(function(i, k) {
+      matrix(mus_t[i,], nrow = k, ncol = ncol(mus_t), byrow = TRUE)
+    }, seq_len(nrow(mus_t)), aux)
   )
   ## Generate epsilon
   eps_m <- funData::simFunData(argvals, M=M, eFunType = eFunType, eValType = eValType, N=N)$simData@X
