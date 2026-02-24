@@ -264,7 +264,7 @@ robpca_out<-function(data){
 #'
 #' @param data data Output of simFunDataOut
 #' @param keep logical / if TRUE, return details of each iteration in a dataframe.
-#' @return
+#' @return a matrix with the main classification measures
 
 #' @export
 
