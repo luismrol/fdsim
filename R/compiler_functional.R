@@ -101,7 +101,7 @@ robpca_out<-function(data){
 #'
 #'
 
-c_matrix<-function(data){
+compiler_out<-function(data){
   out<-as.numeric(data[,ncol(data)]>1)
   data<-data[,c(1:ncol(data)-1)]
   output<-data.frame(
