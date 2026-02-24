@@ -2,7 +2,7 @@
 
 export(boxplot_outliers)
 export(c_matrix)
-export(compiler_functional)
+export(compiler_out)
 export(mfd_sim)
 export(mfd_sim_h)
 export(msplot_simple)
